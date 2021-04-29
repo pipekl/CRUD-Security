@@ -4,10 +4,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-
 import ru.anleto.dao.UserDao;
-
-
 import ru.anleto.model.Role;
 import ru.anleto.model.User;
 
@@ -51,7 +48,6 @@ public class UserServiceImpl implements UserService {
     @Transactional
     @Override
     public Role getRoleByName(String name) {
-
         return userDao.getRoleByName(name);
     }
 

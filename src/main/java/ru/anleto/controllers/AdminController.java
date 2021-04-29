@@ -1,15 +1,15 @@
 package ru.anleto.controllers;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.ui.ModelMap;
+import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 import ru.anleto.model.Role;
 import ru.anleto.model.User;
 import ru.anleto.service.UserService;
 
-
+import javax.validation.Valid;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -17,10 +17,11 @@ import java.util.Set;
 @RequestMapping("/admin/")
 public class AdminController {
 
-    @Autowired
     private UserService userService;
 
-    private User user;
+    public AdminController(UserService userService) {
+        this.userService = userService;
+    }
 
     @GetMapping(value = "users")
     public String getUsers(ModelMap model) {
@@ -28,26 +29,27 @@ public class AdminController {
         return "users";
     }
 
-///////////////////////////////////////////////////
     @GetMapping(value = "newUser")
-    public String getUser() {
+    public String getUser(Model model) {
+        model.addAttribute("user", new User());
         return "addUser";
     }
 
     @PostMapping(value = "new")
-    public String addNewUser(@RequestParam(value = "login") String login,
-                             @RequestParam(value = "password") String password,
-                             @RequestParam(value = "email") String email,
+    public String addNewUser(@ModelAttribute("user") @Valid User user,
+                             BindingResult bindingResult,
                              @RequestParam("role") String[] role) {
+        if (bindingResult.hasErrors())
+            return "addUser";
         Set<Role> roleSet = new HashSet<>();
         for (String roles : role) {
             roleSet.add(userService.getRoleByName(roles));
         }
-        userService.updateUser(new User(login, password, email, roleSet ));
+        user.setRoles(roleSet);
+        userService.updateUser(user);
         return "redirect:users";
     }
 
-//////////////////////////////////////////////////
     @GetMapping("edit")
     public String editPage(@RequestParam("id") Long id, ModelMap model){
         model.addAttribute("user", userService.getUserById(id));
@@ -55,21 +57,20 @@ public class AdminController {
     }
 
     @PostMapping("editSave")
-    public String editUser(Model model,
-                           @RequestParam("id") Long id,
-                           @RequestParam("login") String login,
-                           @RequestParam("password") String password,
-                           @RequestParam("email") String email,
+    public String editUser(@ModelAttribute("user") @Valid User user,
+                           BindingResult bindingResult,
                            @RequestParam("role") String[] role){
+        if (bindingResult.hasErrors())
+            return "editUser";
         Set<Role> roleSet = new HashSet<>();
         for (String roles : role) {
             roleSet.add(userService.getRoleByName(roles));
         }
-        userService.updateUser(new User(id, login, password, email, roleSet ));
+        user.setRoles(roleSet);
+        userService.updateUser(user);
         return "redirect:users";
     }
 
-//////////////////////////////////
     @GetMapping("delete")
     public String deleteUser(@RequestParam(value = "id") String id) {
         Long userId = Long.parseLong(id);
